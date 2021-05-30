@@ -55,7 +55,7 @@ function translate(text, language) {
         },
         params: {
             'api-version': '3.0',
-            'from': 'en',
+            'from': 'en', language,
             'to': language
         },
         data: [{
@@ -82,6 +82,20 @@ sendMessage = async (from, msg, lan, to) => {
             to: to
         }).catch((error) => {
             console.log(error)
+
+            console.log("error in send message")
+            client.messages
+                .create({
+                    body: 'bad input',
+                    from: '+13085366144',
+                    to: from
+                }).then(
+                console.log("then")
+            );
         });
 
 }
+
+
+
+
