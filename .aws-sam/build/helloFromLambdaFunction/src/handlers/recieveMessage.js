@@ -71,29 +71,53 @@ sendMessage = async (from, msg, lan, to) => {
     const authToken = process.env.TWILIO_AUTH_TOKEN
     const client = require('twilio')(accountSid, authToken);
     const message = ` From : ${from} \n ${msg}`
-    const response = await translate(message, lan)
-    const translatedText = await response.data[0].translations[0].text
+
+    async function sendError(text) {
+        await client.messages
+            .create({
+                body: text,
+                from: '+13085366144',
+                to: from
+            })
+    }
 
 
-    await client.messages
-        .create({
-            body: translatedText,
-            from: '+13085366144',
-            to: to
-        }).catch((error) => {
-            console.log(error)
+    const response = await translate(message, lan).catch(error => {
 
-            console.log("error in send message")
-            client.messages
-                .create({
-                    body: 'bad input',
-                    from: '+13085366144',
-                    to: from
-                }).then(
-                    console.log("then")
-            );
-        });
+        console.log("hi from azure error")
+        //  sendError()
+        console.log(error)
+
+    });
+    if (response != undefined) {
+
+        let translatedText = await response
+            .data[0].translations[0].text;
+
+
+        const res = await client.messages
+            .create({
+                body: translatedText,
+                from: '+13085366144',
+                to: to
+            }).catch((error) => {
+                console.log(error)
+
+                console.log("error in send message")
+
+            });
+
+        if (res === undefined)
+            await sendError("incorrect message format")
+
+    } else {
+        //console.log("hi from else")
+        await sendError("incorrect language input")
+    }
+
+
 }
+
 
 
 
