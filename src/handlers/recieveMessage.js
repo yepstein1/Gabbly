@@ -43,14 +43,7 @@ exports.handler = async function (event, context) {
         console.log("else : no access")
     }
 
-    /* await client.messages
-         .create({
-             body: 'incorrect password',
-             from: '+13085366144',
-             to: payload.from
-         });
 
-*/
 
     }
 
@@ -66,7 +59,7 @@ sendMessage = async (from, msg, lan, to) => {
     async function sendError(text) {
         console.log(`hi from begining of sendError`)
         console.log(`in send error what is from: ${from}`)
-        //from = "+" + from
+
         try {
             const messageInfo = await client.messages
                 .create({
@@ -88,7 +81,6 @@ sendMessage = async (from, msg, lan, to) => {
     const response = await translate(message, lan).catch(error => {
 
         console.log("hi from azure error")
-        //  sendError()
         console.log(error)
 
     });
