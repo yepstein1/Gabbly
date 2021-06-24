@@ -1,84 +1,87 @@
 const qs = require('querystring')
-
+const translate = require('./translate')
+const hasAccess = require('./hasAccess')
+require('dotenv').config({path: require('find-config')('.env')})
+/*const bob = */
 exports.handler = async function (event, context) {
-
+//const num=9173960313
+    let allow;
+    let HasAx;
     let data = event.body;
     let buff = new Buffer(data, 'base64');
     let text = buff.toString('ascii')
     let output = qs.decode(text)
+    console.log(`output ${JSON.stringify(output)}`)
     let payload = qs.decode(output.Body)
-    if (payload.pw == process.env.PASSWORD) {
+    try {
+        allow = await hasAccess(output.From);
+        allow.then(res => {
+            console.log(res)
+            HasAx = res;
+        })
+    } catch (e) {
+        console.log(e)
+    }
+
+    if (payload.pw == process.env.PASSWORD || HasAx) {
         const msg = payload.msg
-        const from = payload.from
+        // const from = payload.from
         const lan = payload.lan
         const to = payload.to
 
-        await sendMessage(from, msg, lan, to)
+        await sendMessage(output.From, msg, lan, to)
 
 
+        /*  await sendMessage(+19173960313,"hi", "he",+1913960313)
+       */
         return {
             statusCode: 200,
 
         }
 
     } else {
+        console.log("else : no access")
+    }
 
-        /* await client.messages
-             .create({
-                 body: 'incorrect password',
-                 from: '+13085366144',
-                 to: payload.from
-             });
+    /* await client.messages
+         .create({
+             body: 'incorrect password',
+             from: '+13085366144',
+             to: payload.from
+         });
 
-         */
+*/
 
     }
 
 
-}
-
-function translate(text, language) {
-    const axios = require('axios').default;
-    const {v4: uuidv4} = require('uuid');
-    const subscriptionKey = process.env.AZURE_SUB_KEY
-    const endpoint = "https://api.cognitive.microsofttranslator.com";
-    const location = "eastus";
-    return axios({
-        baseURL: endpoint,
-        url: '/translate',
-        method: 'post',
-        headers: {
-            'Ocp-Apim-Subscription-Key': subscriptionKey,
-            'Ocp-Apim-Subscription-Region': location,
-            'Content-type': 'application/json',
-            'X-ClientTraceId': uuidv4().toString()
-        },
-        params: {
-            'api-version': '3.0',
-            'from': 'en', language,
-            'to': language
-        },
-        data: [{
-            'text': text
-        }],
-        responseType: 'json'
-    });
-}
-
-
 sendMessage = async (from, msg, lan, to) => {
+    let errorMessage;
     const accountSid = process.env.TWILIO_SID;
     const authToken = process.env.TWILIO_AUTH_TOKEN
+    console.log(accountSid)
     const client = require('twilio')(accountSid, authToken);
     const message = ` From : ${from} \n ${msg}`
 
     async function sendError(text) {
-        await client.messages
-            .create({
-                body: text,
-                from: '+13085366144',
-                to: from
-            })
+        console.log(`hi from begining of sendError`)
+        console.log(`in send error what is from: ${from}`)
+        //from = "+" + from
+        try {
+            const messageInfo = await client.messages
+                .create({
+                        body: text,
+                        from: '+13085366144',
+                        to: from
+                    }
+                );
+
+            console.log(` error message result: ${JSON.stringify(messageInfo)}`)
+        } catch (err) {
+            console.log(` i send error :${err}`)
+        }
+
+
     }
 
 
@@ -102,13 +105,17 @@ sendMessage = async (from, msg, lan, to) => {
                 to: to
             }).catch((error) => {
                 console.log(error)
-
-                console.log("error in send message")
+                errorMessage = error
+                // console.log("error in send message")
 
             });
+        console.log(`res in send regular message: ${JSON.stringify(res)}`)
+        console.log(`em: ${errorMessage}`)
+        if (res === undefined) {
+            await sendError("incorrect message format" + errorMessage)
+            //  console.log(`result in error : ${result}`)
+        }
 
-        if (res === undefined)
-            await sendError("incorrect message format")
 
     } else {
         //console.log("hi from else")
@@ -119,6 +126,7 @@ sendMessage = async (from, msg, lan, to) => {
 }
 
 
+/*bob().then().catch(err=> console.log(err))*/
 
 
 
